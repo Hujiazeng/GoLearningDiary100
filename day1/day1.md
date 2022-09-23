@@ -21,7 +21,7 @@ ___
 >> 解决方法: **<u>传地址</u>**
 >
 >6. **CanSet**方法测试是否可修改设置
->7. **Elem** 指向指针指向的值
+>7. **Elem** 指向指针指向的值(也可使用reflect.Indirect())
 >8. **NumField** 获取字段数量
 >9. **Field(index)** 获取对应索引字段
 >10. **Method(index).Call(nil)** 调用结构体指定方法
@@ -35,10 +35,12 @@ ___
 
 ___
 **反射中有些内容需要用地址才能改变的**
+
+```go
     CanSet 判断是否可修改
     若不可修改:
         1. ValueOf传递值地址, v:=reflect.ValueOf(x)值拷贝x生成的v,并不能通过v修改到x的状态
         2. 使用Elem指针所指向的值(v:=reflect.ValueOf(&x)的类型是指针类型), v.Elem().SetString()
         3. 修改成功
         特例: 结构体中的字段必须大写(可导出)才可被修改
-
+```
