@@ -2,7 +2,10 @@ package session
 
 import (
 	"database/sql"
+	"day2/clause"
+	"day2/dialect"
 	"day2/log"
+	"day2/schema"
 	"strings"
 )
 
@@ -10,17 +13,23 @@ type Session struct {
 	db      *sql.DB         //数据库连接对象
 	sql     strings.Builder // sql语句
 	sqlVars []interface{}   // 变量参数
+
+	dialect    dialect.Dialect // 差异支持
+	cacheTable *schema.Schema  // 缓存表(解析耗时避免重复解析)
+	clause     clause.Clause   // 提供生成sql语句
+	tx         *sql.Tx         // 事务
 }
 
 // 创建Session对象
-func New(db *sql.DB) *Session {
-	return &Session{db: db}
+func New(db *sql.DB, dialect dialect.Dialect) *Session {
+	return &Session{db: db, dialect: dialect}
 }
 
 // 清理sql语句及变量参数
 func (s *Session) Clear() {
 	s.sql.Reset()
 	s.sqlVars = nil
+	s.clause = clause.Clause{}
 }
 
 // 封装写sql语句
@@ -47,4 +56,12 @@ func (s *Session) QueryRow() *sql.Row {
 	defer s.Clear()
 	log.Info(s.sql.String(), s.sqlVars)
 	return s.db.QueryRow(s.sql.String(), s.sqlVars...)
+}
+func (s *Session) QueryRows() (rows *sql.Rows, err error) {
+	defer s.Clear()
+	log.Info(s.sql.String(), s.sqlVars)
+	if rows, err = s.db.Query(s.sql.String(), s.sqlVars...); err != nil {
+		log.Error(err)
+	}
+	return
 }

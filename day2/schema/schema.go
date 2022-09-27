@@ -26,7 +26,7 @@ func (Schema *Schema) GetField(name string) *Field {
 
 // 实现解析结构体函数
 func Parse(unknowModel interface{}, d dialect.Dialect) *Schema {
-	modelValue := reflect.ValueOf(unknowModel).Elem()
+	modelValue := reflect.Indirect(reflect.ValueOf(unknowModel))
 	modelType := modelValue.Type()
 
 	schema := &Schema{
@@ -53,4 +53,14 @@ func Parse(unknowModel interface{}, d dialect.Dialect) *Schema {
 		schema.fieldMap[f.Name] = field
 	}
 	return schema
+}
+
+// 由于ORM期望调用的方式 &User{Name:"Tom", Age: 18}, 故需要按数据库中列的字段顺序, 从对象中取出对应值
+func (s *Schema) RecordValues(model interface{}) (recordValues []interface{}) {
+	modelValue := reflect.Indirect(reflect.ValueOf(model))
+
+	for _, field := range s.Fields {
+		recordValues = append(recordValues, modelValue.FieldByName(field.Name).Interface())
+	}
+	return
 }
