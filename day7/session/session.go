@@ -3,6 +3,8 @@ package session
 import (
 	"database/sql"
 	"day7/log"
+	"day7/schema"
+	"reflect"
 	"strings"
 )
 
@@ -12,6 +14,8 @@ type Session struct {
 
 	sql     strings.Builder // re-use
 	sqlVars []interface{}
+
+	cacheSchema *schema.Schema
 }
 
 // 创建对象
@@ -20,7 +24,7 @@ func New(db *sql.DB) *Session {
 }
 
 // 注入sql(链式)
-func (s *Session) Raw(sql string, vars []interface{}) *Session {
+func (s *Session) Raw(sql string, vars ...interface{}) *Session {
 	_, err := s.sql.WriteString(sql)
 	if err != nil {
 		log.Error("Raw sql builder write string err")
@@ -49,6 +53,14 @@ func (s *Session) QueryRows(sql string, vars []interface{}) (*sql.Rows, error) {
 	defer s.Reset()
 	log.Info("query rows sql: %s, vars: %v", s.sql.String(), s.sqlVars)
 	return s.db.Query(sql, vars...)
+}
+
+// 避免重复解析
+func (s *Session) Model(model interface{}) *Session {
+	if s.cacheSchema == nil || reflect.ValueOf(s.cacheSchema.Model) != reflect.Indirect(reflect.ValueOf(model)) {
+		s.cacheSchema = schema.Parse(model)
+	}
+	return s
 }
 
 func (s *Session) Reset() {

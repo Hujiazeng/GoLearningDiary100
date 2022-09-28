@@ -2,6 +2,7 @@ package session
 
 import (
 	"database/sql"
+	"day7/schema"
 	"reflect"
 	"testing"
 
@@ -34,5 +35,34 @@ func TestRaw(t *testing.T) {
 	t.Log(s.sqlVars)
 	if ok := reflect.DeepEqual(testList, s.sqlVars); !ok {
 		t.Fatal("raw sqlVars error")
+	}
+}
+
+type Hero struct {
+	NickName string `korm:"primarykey;  type:varchar(99)"`
+	Age      int    `korm:"notnull; comment:年龄; type:int(12); Default:520; unique;"`
+}
+
+func TestCreateTable(t *testing.T) {
+	s, err := testNewSession()
+	if err != nil {
+		t.Fatal("session error")
+	}
+	schema := schema.Parse(&Hero{})
+	s.CreateTable(schema)
+}
+
+func TestDropTable(t *testing.T) {
+	s, err := testNewSession()
+	if err != nil {
+		t.Fatal("session error")
+	}
+	schema := schema.Parse(&Hero{})
+	ok := s.HasTable(schema)
+	if ok {
+		_, err = s.DropTable(schema)
+		if err != nil {
+			t.Fatal("drop table err")
+		}
 	}
 }
