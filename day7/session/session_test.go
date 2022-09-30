@@ -57,8 +57,8 @@ func TestCreateTable(t *testing.T) {
 	if err != nil {
 		t.Fatal("session error")
 	}
-	schema := schema.Parse(&TT{})
-	s.CreateTable(schema)
+	schema.Parse(&TT{})
+	s.CreateTable()
 }
 
 func TestDropTable(t *testing.T) {
@@ -66,10 +66,10 @@ func TestDropTable(t *testing.T) {
 	if err != nil {
 		t.Fatal("session error")
 	}
-	schema := schema.Parse(&Hero{})
-	ok := s.HasTable(schema)
+	schema.Parse(&Hero{})
+	ok := s.HasTable()
 	if ok {
-		_, err = s.DropTable(schema)
+		_, err = s.DropTable()
 		if err != nil {
 			t.Fatal("drop table err")
 		}
@@ -77,8 +77,8 @@ func TestDropTable(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	schema := schema.Parse(&Hero{})
-	session.CreateTable(schema)
+	schema.Parse(&Hero{})
+	session.CreateTable()
 	u1 := &Hero{NickName: "xiaxia", Age: 18}
 	row, err := session.Insert(u1)
 	if err != nil || row == 0 {
@@ -100,4 +100,14 @@ func TestFilter(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	session.Model(&Hero{})
 	session.Where("NickName = ?", "xiaxia").Update("Age", 18)
+}
+
+func TestTransaction(t *testing.T) {
+
+	session.Model(&Hero{})
+	session.Transaction(func(s *Session) error {
+		session.Where("NickName = ?", "xiaxia").Update("Age", 100)
+		return nil
+	})
+
 }

@@ -17,6 +17,23 @@ type Session struct {
 	sqlVars     []interface{}
 	clause      *clause.Clause
 	cacheSchema *schema.Schema
+	tx          *sql.Tx //transaction
+}
+
+type CommenDB interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
+var _ CommenDB = (*sql.DB)(nil)
+var _ CommenDB = (*sql.Tx)(nil)
+
+func (s *Session) DB() CommenDB {
+	if s.tx == nil {
+		return s.db
+	}
+	return s.tx
 }
 
 // 创建对象
@@ -42,7 +59,7 @@ func (s *Session) Raw(sql string, vars ...interface{}) *Session {
 func (s *Session) Exec() (result sql.Result, err error) {
 	defer s.Reset()
 	log.Infof("execute sql: %s, vars: %v", s.sql.String(), s.sqlVars)
-	result, err = s.db.Exec(s.sql.String(), s.sqlVars...)
+	result, err = s.DB().Exec(s.sql.String(), s.sqlVars...)
 	return
 }
 
@@ -50,14 +67,14 @@ func (s *Session) Exec() (result sql.Result, err error) {
 func (s *Session) QueryRow() *sql.Row {
 	defer s.Reset()
 	log.Infof("query row sql: %s, vars: %v", s.sql.String(), s.sqlVars)
-	return s.db.QueryRow(s.sql.String(), s.sqlVars...)
+	return s.DB().QueryRow(s.sql.String(), s.sqlVars...)
 }
 
 // 查询多条
 func (s *Session) QueryRows() (*sql.Rows, error) {
 	defer s.Reset()
 	log.Infof("query rows sql: %s, vars: %v", s.sql.String(), s.sqlVars)
-	return s.db.Query(s.sql.String(), s.sqlVars...)
+	return s.DB().Query(s.sql.String(), s.sqlVars...)
 }
 
 // 避免重复解析

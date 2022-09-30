@@ -2,7 +2,6 @@ package session
 
 import (
 	"database/sql"
-	"day7/schema"
 	"fmt"
 	"strings"
 )
@@ -10,12 +9,12 @@ import (
 // 表操作
 
 // 创建表
-func (s *Session) CreateTable(schema *schema.Schema) (sql.Result, error) {
+func (s *Session) CreateTable() (sql.Result, error) {
 	var colomns []string
 	var primarykeys []string
 	var uniquekeys []string
-	for i := 0; i < len(schema.Fields); i++ {
-		field := schema.Fields[i]
+	for i := 0; i < len(s.cacheSchema.Fields); i++ {
+		field := s.cacheSchema.Fields[i]
 		tempColomn := fmt.Sprintf("`%s` %s %s ", field.Name, field.Type, field.UnSign)
 		if field.Default != "" {
 			tempColomn = fmt.Sprintf("%s Default %s", tempColomn, field.Default)
@@ -37,22 +36,22 @@ func (s *Session) CreateTable(schema *schema.Schema) (sql.Result, error) {
 	colomns = append(colomns, primarykeys...)
 	colomns = append(colomns, uniquekeys...)
 	desc := strings.Join(colomns, ",")
-	sql := fmt.Sprintf("CREATE TABLE `%s` (%s)", schema.Name, desc)
+	sql := fmt.Sprintf("CREATE TABLE `%s` (%s)", s.cacheSchema.Name, desc)
 
 	return s.Raw(sql).Exec()
 }
 
 // 删除表
-func (s *Session) DropTable(schema *schema.Schema) (sql.Result, error) {
-	sql := fmt.Sprintf("DROP TABLE %s", schema.Name)
+func (s *Session) DropTable() (sql.Result, error) {
+	sql := fmt.Sprintf("DROP TABLE %s", s.cacheSchema.Name)
 	return s.Raw(sql).Exec()
 }
 
 // 是否存在表
-func (s *Session) HasTable(schema *schema.Schema) bool {
-	sql := fmt.Sprintf("SHOW TABLEs like '%s'", schema.Name)
+func (s *Session) HasTable() bool {
+	sql := fmt.Sprintf("SHOW TABLEs like '%s'", s.cacheSchema.Name)
 	row := s.Raw(sql).QueryRow()
 	var name string
 	row.Scan(&name)
-	return name == schema.Name
+	return name == s.cacheSchema.Name
 }

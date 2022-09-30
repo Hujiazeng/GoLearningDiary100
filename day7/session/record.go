@@ -69,7 +69,7 @@ func (s *Session) Where(desc string, args ...interface{}) *Session {
 	return s
 }
 
-func (s *Session) LIMIT(n int) *Session {
+func (s *Session) Limit(n int) *Session {
 	s.clause.Set(clause.LIMIT, n)
 	return s
 }
