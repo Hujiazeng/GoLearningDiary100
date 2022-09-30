@@ -64,6 +64,7 @@ func Parse(model interface{}) *Schema {
 			schema.Name = modelType.Name()
 			schema.FieldNames = append(schema.FieldNames, field.Name)
 			schema.Fields = append(schema.Fields, field)
+
 		}
 	}
 	schema.Model = model

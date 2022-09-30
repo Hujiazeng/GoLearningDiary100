@@ -3,6 +3,7 @@ package main
 import (
 	"day7/korm"
 	"day7/log"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -17,6 +18,8 @@ func main() {
 	k := korm.New(db)
 
 	// 会话对象
-	_ = k.NewSession()
+	session := k.NewSession()
 
+	res, err := session.Raw("INSERT INTO `user` (Name, Age) VALUES (?,?)", "hh", 123).Exec()
+	fmt.Println(res)
 }

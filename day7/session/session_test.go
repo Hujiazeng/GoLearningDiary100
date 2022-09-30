@@ -3,11 +3,15 @@ package session
 import (
 	"database/sql"
 	"day7/schema"
+	"fmt"
 	"reflect"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+var db, _ = sql.Open("mysql", "root:mysql@tcp(10.6.32.62:3306)/daqing2_dev")
+var session = New(db)
 
 func testNewSession() (*Session, error) {
 	// 获取session对象
@@ -28,7 +32,7 @@ func TestRaw(t *testing.T) {
 
 	var testList = []interface{}{}
 	testList = append(testList, 1)
-	s.Raw("SELECT * FROM g", testList)
+	s.Raw("SELECT * FROM g", testList...)
 	if s.sql.String() != "SELECT * FROM g" {
 		t.Fatal("raw sql error")
 	}
@@ -43,12 +47,17 @@ type Hero struct {
 	Age      int    `korm:"notnull; comment:年龄; type:int(12); Default:520; unique;"`
 }
 
+type TT struct {
+	Name  string `korm:"primarykey;  type:varchar(99)"`
+	Money int    `korm:"notnull; comment:年龄; type:int(12); Default:520; unique;"`
+}
+
 func TestCreateTable(t *testing.T) {
 	s, err := testNewSession()
 	if err != nil {
 		t.Fatal("session error")
 	}
-	schema := schema.Parse(&Hero{})
+	schema := schema.Parse(&TT{})
 	s.CreateTable(schema)
 }
 
@@ -65,4 +74,30 @@ func TestDropTable(t *testing.T) {
 			t.Fatal("drop table err")
 		}
 	}
+}
+
+func TestInsert(t *testing.T) {
+	schema := schema.Parse(&Hero{})
+	session.CreateTable(schema)
+	u1 := &Hero{NickName: "xiaxia", Age: 18}
+	row, err := session.Insert(u1)
+	if err != nil || row == 0 {
+		t.Fatal("insert err")
+	}
+}
+
+func TestFilter(t *testing.T) {
+	var temp []Hero
+	err := session.Filter(&temp)
+	if err != nil {
+		t.Fatal("filter err")
+	}
+
+	fmt.Println(temp)
+
+}
+
+func TestUpdate(t *testing.T) {
+	session.Model(&Hero{})
+	session.Where("NickName = ?", "xiaxia").Update("Age", 18)
 }

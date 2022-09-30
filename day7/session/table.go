@@ -51,7 +51,7 @@ func (s *Session) DropTable(schema *schema.Schema) (sql.Result, error) {
 // 是否存在表
 func (s *Session) HasTable(schema *schema.Schema) bool {
 	sql := fmt.Sprintf("SHOW TABLEs like '%s'", schema.Name)
-	row := s.Raw(sql).QueryRow(s.sql.String(), s.sqlVars)
+	row := s.Raw(sql).QueryRow()
 	var name string
 	row.Scan(&name)
 	return name == schema.Name

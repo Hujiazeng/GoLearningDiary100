@@ -2,6 +2,7 @@ package session
 
 import (
 	"database/sql"
+	"day7/clause"
 	"day7/log"
 	"day7/schema"
 	"reflect"
@@ -12,15 +13,19 @@ import (
 type Session struct {
 	db *sql.DB
 
-	sql     strings.Builder // re-use
-	sqlVars []interface{}
-
+	sql         strings.Builder // re-use
+	sqlVars     []interface{}
+	clause      *clause.Clause
 	cacheSchema *schema.Schema
 }
 
 // 创建对象
 func New(db *sql.DB) *Session {
-	return &Session{db: db, sql: strings.Builder{}, sqlVars: make([]interface{}, 0)}
+	return &Session{
+		db:      db,
+		clause:  &clause.Clause{},
+		sql:     strings.Builder{},
+		sqlVars: make([]interface{}, 0)}
 }
 
 // 注入sql(链式)
@@ -36,23 +41,23 @@ func (s *Session) Raw(sql string, vars ...interface{}) *Session {
 // 执行
 func (s *Session) Exec() (result sql.Result, err error) {
 	defer s.Reset()
-	log.Info("execute sql: %s, vars: %v", s.sql.String(), s.sqlVars)
+	log.Infof("execute sql: %s, vars: %v", s.sql.String(), s.sqlVars)
 	result, err = s.db.Exec(s.sql.String(), s.sqlVars...)
 	return
 }
 
 // 查询单条
-func (s *Session) QueryRow(sql string, vars []interface{}) *sql.Row {
+func (s *Session) QueryRow() *sql.Row {
 	defer s.Reset()
-	log.Info("query row sql: %s, vars: %v", s.sql.String(), s.sqlVars)
-	return s.db.QueryRow(sql, vars...)
+	log.Infof("query row sql: %s, vars: %v", s.sql.String(), s.sqlVars)
+	return s.db.QueryRow(s.sql.String(), s.sqlVars...)
 }
 
 // 查询多条
-func (s *Session) QueryRows(sql string, vars []interface{}) (*sql.Rows, error) {
+func (s *Session) QueryRows() (*sql.Rows, error) {
 	defer s.Reset()
-	log.Info("query rows sql: %s, vars: %v", s.sql.String(), s.sqlVars)
-	return s.db.Query(sql, vars...)
+	log.Infof("query rows sql: %s, vars: %v", s.sql.String(), s.sqlVars)
+	return s.db.Query(s.sql.String(), s.sqlVars...)
 }
 
 // 避免重复解析
